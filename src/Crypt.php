@@ -48,7 +48,7 @@ class Crypt
     /**
      * @var int
      */
-    private $hmacSize;
+    private $hmacSize = 32; // SHA-256
 
     /**
      * @var int
@@ -74,7 +74,6 @@ class Crypt
               $this->setKey($config['key']);
           }
         }
-        $this->hmacSize = $this->getHmacSize($this->hash);
     }
 
     /**
