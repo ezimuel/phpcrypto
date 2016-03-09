@@ -3,20 +3,20 @@ declare(strict_types=1);
 
 namespace PHPCryptoTest;
 
-use PHPCrypto\Crypt;
+use PHPCrypto\Symmetric;
 
-class CryptTest extends \PHPUnit_Framework_TestCase
+class SymmetricTest extends \PHPUnit_Framework_TestCase
 {
     public function setUp()
     {
-        $this->crypt = new Crypt();
-        $this->crypt->setIterations(Crypt::MIN_PBKDF2_ITERATIONS);
+        $this->crypt = new Symmetric();
+        $this->crypt->setIterations(Symmetric::MIN_PBKDF2_ITERATIONS);
     }
 
     public function testConstructor()
     {
-        $crypt = new Crypt();
-        $this->assertInstanceOf(Crypt::class, $crypt);
+        $crypt = new Symmetric();
+        $this->assertInstanceOf(Symmetric::class, $crypt);
     }
 
     public function testConstructWithOptions()
@@ -24,15 +24,15 @@ class CryptTest extends \PHPUnit_Framework_TestCase
         $algos = openssl_get_cipher_methods(true);
         $algo = $algos[array_rand($algos)];
         $hash = hash_algos()[array_rand(hash_algos())];
-        $iterations = Crypt::MIN_PBKDF2_ITERATIONS * 3;
+        $iterations = Symmetric::MIN_PBKDF2_ITERATIONS * 3;
 
         $options = [
             'algo'       => $algo,
             'hash'       => $hash,
             'iterations' => $iterations
         ];
-        $crypt = new Crypt($options);
-        $this->assertInstanceOf(Crypt::class, $crypt);
+        $crypt = new Symmetric($options);
+        $this->assertInstanceOf(Symmetric::class, $crypt);
         $this->assertEquals($algo, $crypt->getAlgorithm());
         $this->assertEquals($hash, $crypt->getHash());
         $this->assertEquals($iterations, $crypt->getIterations());
@@ -40,7 +40,7 @@ class CryptTest extends \PHPUnit_Framework_TestCase
 
     public function testSetKey()
     {
-        $key = random_bytes(Crypt::MIN_SIZE_KEY);
+        $key = random_bytes(Symmetric::MIN_SIZE_KEY);
         $this->crypt->setKey($key);
         $this->assertEquals($key, $this->crypt->getKey());
     }
@@ -53,9 +53,25 @@ class CryptTest extends \PHPUnit_Framework_TestCase
         $this->crypt->setKey('test');
     }
 
+    public function testSetKeySize()
+    {
+        $size = 24;
+        $this->crypt->setKeySize($size);
+        $this->assertEquals($size, $this->crypt->getKeySize());
+    }
+
+    /**
+     * @expectedException PHPUnit_Framework_Error_Warning
+     */
+    public function testSetKeySizeTooShort()
+    {
+        $size = 8;
+        $this->crypt->setKeySize($size);
+    }
+
     public function testSetIterations()
     {
-        $iterations = Crypt::MIN_PBKDF2_ITERATIONS * 2;
+        $iterations = Symmetric::MIN_PBKDF2_ITERATIONS * 2;
         $this->crypt->setIterations($iterations);
         $this->assertEquals($iterations, $this->crypt->getIterations());
     }
@@ -101,7 +117,7 @@ class CryptTest extends \PHPUnit_Framework_TestCase
 
     public function testEncryptDecrypt()
     {
-        $this->crypt->setKey(random_bytes(Crypt::MIN_SIZE_KEY));
+        $this->crypt->setKey(random_bytes(Symmetric::MIN_SIZE_KEY));
         $plaintext = random_bytes(1024);
 
         $ciphertext = $this->crypt->encrypt($plaintext);
@@ -134,7 +150,7 @@ class CryptTest extends \PHPUnit_Framework_TestCase
      */
     public function testAuthenticationFailure()
     {
-        $this->crypt->setKey(random_bytes(Crypt::MIN_SIZE_KEY));
+        $this->crypt->setKey(random_bytes(Symmetric::MIN_SIZE_KEY));
         $plaintext = random_bytes(1024);
 
         $ciphertext = $this->crypt->encrypt($plaintext);

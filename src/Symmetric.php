@@ -1,7 +1,8 @@
 <?php
 /**
- * Crypto class to encrypt/decrypt string using encrypt-then-authenticate
- * technique with HMAC
+ * Symmetric encryption + authentication
+ * encrypt-then-authenticate with HMAC
+ * Default: AES in CBC + HMAC-SHA256
  *
  * @author Enrico Zimuel (enrico@zimuel.it)
  */
@@ -9,7 +10,7 @@ declare(strict_types=1);
 
 namespace PHPCrypto;
 
-class Crypt
+class Symmetric
 {
     /**
      * Minimum number of PBKDF2 iteration allowed for security reason
@@ -41,6 +42,7 @@ class Crypt
     protected $hash = 'sha256';
 
     /**
+     * Symmetric encryption key
      * @var string
      */
     protected $key;
@@ -91,15 +93,23 @@ class Crypt
      */
     public function setKey(string $key)
     {
+        $this->checkLengthKey($key);
+        $this->key = $key;
+    }
+
+    /**
+     * Check the key length for security reason
+     * @param string
+     */
+    protected function checkLengthKey($key)
+    {
         if (strlen($key) < self::MIN_SIZE_KEY) {
             trigger_error(
                 sprintf("The encryption key %s it's too short!", $key),
                 E_USER_WARNING
             );
         }
-        $this->key = $key;
     }
-
     /**
      * Get the encryption key
      * @return string
@@ -107,6 +117,30 @@ class Crypt
     public function getKey(): string
     {
         return $this->key;
+    }
+
+    /**
+     * Set the encryption key size (in bytes)
+     * @param int $size
+     */
+    public function setKeySize(int $size)
+    {
+        if ($size < 16) { // key size < 128 bits
+            trigger_error(
+                sprintf("The size %d of the encryption key it's too short!", $size),
+                E_USER_WARNING
+            );
+        }
+        $this->keySize = $size;
+    }
+
+    /**
+     * Get the key size of the cipher (in bytes)
+     * @return int
+     */
+    public function getKeySize() : int
+    {
+        return $this->keySize;
     }
 
     /**
@@ -186,19 +220,26 @@ class Crypt
     /**
      * Encrypt-then-authenticate with HMAC
      * @param string $plaintext
+     * @param string $key
      * @return string
      * @throws \RuntimeException
      */
-    public function encrypt(string $plaintext) : string
+    public function encrypt(string $plaintext, string $key = '') : string
     {
-        if (empty($this->key)) {
+        if (empty($key) && empty($this->key)) {
             throw new \RuntimeException('The encryption key cannot be empty');
         }
+        if (empty($key)) {
+          $key = $this->key;
+        } else {
+          $this->checkLengthKey($key);
+        }
+
         $ivSize = openssl_cipher_iv_length($this->algo);
         $iv     = random_bytes($ivSize);
 
         // Generate an encryption and authentication key
-        $keys    = hash_pbkdf2($this->hash, $this->key, $iv, $this->iterations, $this->keySize * 2, true);
+        $keys    = hash_pbkdf2($this->hash, $key, $iv, $this->iterations, $this->keySize * 2, true);
         $encKey  = substr($keys, 0, $this->keySize); // encryption key
         $hmacKey = substr($keys, $this->keySize);    // authentication key
 
@@ -218,13 +259,19 @@ class Crypt
     /**
      * Authenticate-then-decrypt with HMAC
      * @param string $ciphertext
+     * @param string $key
      * @return string
      * @throws \RuntimeException
      */
-    public function decrypt(string $ciphertext) : string
+    public function decrypt(string $ciphertext, string $key = '') : string
     {
-        if (empty($this->key)) {
+        if (empty($key) && empty($this->key)) {
             throw new \RuntimeException('The decryption key cannot be empty');
+        }
+        if (empty($key)) {
+          $key = $this->key;
+        } else {
+          $this->checkLengthKey($key);
         }
         $hmac       = substr($ciphertext, 0, $this->hmacSize);
         $ivSize     = openssl_cipher_iv_length($this->algo);
@@ -232,14 +279,14 @@ class Crypt
         $ciphertext = substr($ciphertext, $ivSize + $this->hmacSize);
 
         // Generate the encryption and hmac keys
-        $keys    = hash_pbkdf2($this->hash, $this->key, $iv, $this->iterations, $this->keySize * 2, true);
+        $keys    = hash_pbkdf2($this->hash, $key, $iv, $this->iterations, $this->keySize * 2, true);
         $encKey  = substr($keys, 0, $this->keySize); // encryption key
         $hmacKey = substr($keys, $this->keySize);    // authentication key
 
         // Authentication
         $hmacNew = hash_hmac($this->hash, $iv . $ciphertext, $hmacKey, true);
         if (!hash_equals($hmac, $hmacNew)) {
-	         throw new \RuntimeException('Authentication failed');
+           throw new \RuntimeException('Authentication failed');
         }
         // Decrypt
         return openssl_decrypt(
