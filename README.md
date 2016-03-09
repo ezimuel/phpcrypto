@@ -1,4 +1,4 @@
-# phpcrypto
+# PHPCrypto
 
 [![Build Status](https://secure.travis-ci.org/ezimuel/phpcrypto.svg?branch=master)](https://secure.travis-ci.org/ezimuel/phpcrypto)
 
