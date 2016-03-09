@@ -69,4 +69,4 @@ Here I reported some notes about the OpenSSL PHP extension usage:
 
 Copyright 2016 by [Enrico Zimuel](http://www.zimuel.it)
 
-The license usage is reported in the [LICENSE](license) file.
+The license usage is reported in the [LICENSE](LICENSE) file.
