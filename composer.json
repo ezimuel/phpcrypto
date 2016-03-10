@@ -1,7 +1,8 @@
 {
     "name": "ezimuel/phpcrypto",
     "description": "Cryptographic library for PHP 7 based on OpenSSL",
-    "license": "BSD-3-Clause",
+    "type" : "library",
+    "license": "MIT",
     "keywords": [
         "Cryptography",
         "PHP7"
