@@ -51,6 +51,20 @@ $result = $cipher->decrypt($ciphertext);
 print ($result === $plaintext) ? "OK" : "FAILURE";
 ```
 
+## SECURITY BEST PRACTICES
+
+In this project we used the following security best practices:
+
+- Min size of user's key for encryption set to 12
+  Source: [https://en.wikipedia.org/wiki/Password_strength](https://en.wikipedia.org/wiki/Password_strength)
+- Use of PBKDF2 to generate the encryption and authentication key
+  Set the default iteration number to 80000 (min 20000)
+  Source: [https://goo.gl/bzv4dK](https://goo.gl/bzv4dK)
+- Encryption-then-authentication using HMAC
+  Source: [http://crypto.stackexchange.com/a/205](http://crypto.stackexchange.com/a/205)
+- Use of OAEP padding for OpenSSL public key encryption
+  Source: [http://crypto.stackexchange.com/a/12706](http://crypto.stackexchange.com/a/12706)
+
 ## TO DO
 
 - encrypt/decrypt functions in PublicKey
