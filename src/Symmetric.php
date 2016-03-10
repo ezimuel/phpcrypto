@@ -84,7 +84,7 @@ class Symmetric
      */
     protected function getHmacSize($hash) : int
     {
-        return strlen(hash_hmac($hash, 'test', openssl_random_pseudo_bytes(32), true));
+        return mb_strlen(hash_hmac($hash, 'test', openssl_random_pseudo_bytes(32), true), '8bit');
     }
 
     /**
@@ -103,7 +103,7 @@ class Symmetric
      */
     protected function checkLengthKey($key)
     {
-        if (strlen($key) < self::MIN_SIZE_KEY) {
+        if (mb_strlen($key, '8bit') < self::MIN_SIZE_KEY) {
             trigger_error(
                 sprintf("The encryption key %s it's too short!", $key),
                 E_USER_WARNING
@@ -240,8 +240,8 @@ class Symmetric
 
         // Generate an encryption and authentication key
         $keys    = hash_pbkdf2($this->hash, $key, $iv, $this->iterations, $this->keySize * 2, true);
-        $encKey  = substr($keys, 0, $this->keySize); // encryption key
-        $hmacKey = substr($keys, $this->keySize);    // authentication key
+        $encKey  = mb_substr($keys, 0, $this->keySize, '8bit'); // encryption key
+        $hmacKey = mb_substr($keys, $this->keySize, null, '8bit');    // authentication key
 
         // Encrypt
         $ciphertext = openssl_encrypt(
@@ -273,15 +273,15 @@ class Symmetric
         } else {
           $this->checkLengthKey($key);
         }
-        $hmac       = substr($ciphertext, 0, $this->hmacSize);
+        $hmac       = mb_substr($ciphertext, 0, $this->hmacSize, '8bit');
         $ivSize     = openssl_cipher_iv_length($this->algo);
-        $iv         = substr($ciphertext, $this->hmacSize, $ivSize);
-        $ciphertext = substr($ciphertext, $ivSize + $this->hmacSize);
+        $iv         = mb_substr($ciphertext, $this->hmacSize, $ivSize, '8bit');
+        $ciphertext = mb_substr($ciphertext, $ivSize + $this->hmacSize, null, '8bit');
 
         // Generate the encryption and hmac keys
         $keys    = hash_pbkdf2($this->hash, $key, $iv, $this->iterations, $this->keySize * 2, true);
-        $encKey  = substr($keys, 0, $this->keySize); // encryption key
-        $hmacKey = substr($keys, $this->keySize);    // authentication key
+        $encKey  = mb_substr($keys, 0, $this->keySize, '8bit'); // encryption key
+        $hmacKey = mb_substr($keys, $this->keySize, null, '8bit');    // authentication key
 
         // Authentication
         $hmacNew = hash_hmac($this->hash, $iv . $ciphertext, $hmacKey, true);
