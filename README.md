@@ -59,7 +59,7 @@ In this project we used the following security best practices:
 
    Source: [https://en.wikipedia.org/wiki/Password_strength](https://en.wikipedia.org/wiki/Password_strength)
 
-- Use of PBKDF2 to generate the encryption and authentication key. Set the default iteration number to 80000 (min 20000)
+- Use of PBKDF2 to generate the encryption and authentication key. Set the default iteration number to 80'000 (min 20'000)
 
    Source: [https://goo.gl/bzv4dK](https://goo.gl/bzv4dK)
 
