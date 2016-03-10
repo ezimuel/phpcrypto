@@ -35,7 +35,7 @@ class Hybrid
       $ciphertext = $this->symmetric->encrypt($plaintext, $sessionKey);
 
       // encrypt the session key with publicKey
-      openssl_public_encrypt($sessionKey, $encryptedKey, $publicKey);
+      openssl_public_encrypt($sessionKey, $encryptedKey, $publicKey, OPENSSL_PKCS1_OAEP_PADDING);
 
       return base64_encode($encryptedKey) . ':' . $ciphertext;
   }
@@ -53,7 +53,7 @@ class Hybrid
       list($encryptedKey, $ciphertext) = explode(':', $msg, 2);
 
       // decrypt the session key with privateKey
-      openssl_private_decrypt(base64_decode($encryptedKey), $sessionKey, $privateKey);
+      openssl_private_decrypt(base64_decode($encryptedKey), $sessionKey, $privateKey, OPENSSL_PKCS1_OAEP_PADDING);
 
       // encrypt the plaintext with symmetric algorithm
       return $this->symmetric->decrypt($ciphertext, $sessionKey);
