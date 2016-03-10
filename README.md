@@ -20,7 +20,7 @@ As this software is **ALPHA, Use at your own risk!**
 The usage is quite straightforward, after installing the library using composer:
 
 ```
-composer install
+composer require ezimuel/phpcrypto:dev-master
 ```
 
 You can consume the following classes Symmetric, PublicKey and Hybrid for
