@@ -73,9 +73,9 @@ In this project we used the following security best practices:
 
 ## TO DO
 
-- encrypt/decrypt functions in PublicKey
-- sign/verify functions for digital signature in PublicKey
-- Ca management in public key schemas
+- [ ] encrypt/decrypt functions in PublicKey
+- [ ] sign/verify functions for digital signature in PublicKey
+- [ ] Ca management in public key schemas
 
 ## NOTES ABOUT OPENSSL EXTENSION
 
