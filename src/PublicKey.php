@@ -20,6 +20,25 @@ class PublicKey
     ];
 
     /**
+     * Valid padding mode for encryption/decryption
+     */
+    const VALID_PADDINGS = [
+        OPENSSL_PKCS1_PADDING,
+        OPENSSL_SSLV23_PADDING,
+        OPENSSL_PKCS1_OAEP_PADDING,
+        OPENSSL_NO_PADDING
+    ];
+
+    /**
+     * @var int
+     * Note: padding is set to OPENSSL_PKCS1_OAEP_PADDING to prevent
+     * Bleichenbacher's chosen-ciphertext attack
+     * @see http://crypto.stackexchange.com/questions/12688/can-you-explain-bleichenbachers-cca-attack-on-pkcs1-v1-5
+     *
+     */
+    protected $padding = OPENSSL_PKCS1_OAEP_PADDING;
+
+    /**
      * @var string
      */
     protected $publicKey = '';
@@ -60,6 +79,30 @@ class PublicKey
     }
 
     /**
+     * Set a padding for encryption/decryption mode
+     * @param int $padding
+     * @throws InvalidArgumentException
+     */
+    public function setPadding(int $padding)
+    {
+        if (! in_array($padding, self::VALID_PADDINGS)) {
+            throw new \InvalidArgumentException(
+                sprintf("The padding specified %d is not supported", $padding)
+            );
+        }
+        $this->padding = $padding;
+    }
+
+    /**
+     * Get the padding value
+     * @return int
+     */
+    public function getPadding(): int
+    {
+        return $this->padding;
+    }
+
+    /**
      * Save the private key in a file using a passphrase
      * @param string $filename
      * @param string $passphrase
@@ -76,6 +119,7 @@ class PublicKey
      * @param string $filename
      * @param string $passphrase
      * @return string
+     * @throws RuntimeException
      */
     public function readPrivateKey(string $filename, string $passphrase)
     {
@@ -106,5 +150,55 @@ class PublicKey
     {
         $this->publicKey = file_get_contents($filename);
         return $this->publicKey;
+    }
+
+    /**
+     * Encrypt a string using a public key
+     * @param string $plaintext
+     * @param string $publicKey
+     * @return string
+     * @throws RuntimeException
+     */
+    public function encrypt(string $plaintext, string $publicKey = '') : string
+    {
+        if (empty($publicKey)) {
+            if (empty($this->publicKey)) {
+                throw new \RuntimeException(
+                    "I cannot encrypt without a public key"
+                );
+            }
+            $publicKey = $this->publicKey;
+        }
+        if (! openssl_public_encrypt($plaintext, $result, $publicKey, $this->padding)) {
+            throw new \RuntimeException(
+                sprintf("Error during encrypt: %s", openssl_error_string())
+            );
+        }
+        return $result;
+    }
+
+    /**
+     * Decrypt using a private key
+     * @param string $ciphertext
+     * @param string $privateKey
+     * @return string
+     * @throws RuntimeException
+     */
+    public function decrypt(string $ciphertext, string $privateKey = '') : string
+    {
+        if (empty($privateKey)) {
+            if (empty($this->privateKey)) {
+                throw new \RuntimeException(
+                    "I cannot decrypt without a private key"
+                );
+            }
+            $privateKey = $this->privateKey;
+        }
+        if (! openssl_private_decrypt($ciphertext, $result, $privateKey, $this->padding)) {
+            throw new \RuntimeException(
+                sprintf("Error during decrypt: %s", openssl_error_string())
+            );
+        }
+        return $result;
     }
 }

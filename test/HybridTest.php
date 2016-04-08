@@ -5,12 +5,33 @@ namespace PHPCryptoTest;
 
 use PHPCrypto\Hybrid;
 use PHPCrypto\Symmetric;
+use PHPCrypto\PublicKey;
 
 class HybridTest extends \PHPUnit_Framework_TestCase
 {
     public function setup()
     {
-        $this->crypt = new Hybrid(new Symmetric);
+        $this->crypt = new Hybrid();
+    }
+
+    public function testConstructor()
+    {
+        $crypt = new Hybrid();
+
+        $this->assertInstanceOf(Hybrid::class, $crypt);
+        $this->assertInstanceOf(Symmetric::class, $crypt->getSymmetricInstance());
+        $this->assertInstanceOf(PublicKey::class, $crypt->getPublicKeyInstance());
+    }
+
+    public function testConstructorWithParams()
+    {
+        $symmetric = new Symmetric();
+        $publicKey = new PublicKey();
+        $crypt     = new Hybrid($symmetric, $publicKey);
+
+        $this->assertInstanceOf(Hybrid::class, $crypt);
+        $this->assertEquals($symmetric, $crypt->getSymmetricInstance());
+        $this->assertEquals($publicKey, $crypt->getPublicKeyInstance());
     }
 
     public function getKeys()
@@ -42,12 +63,13 @@ mtfQDL3hqbP7kg==
             ]
         ];
     }
+
     /**
      * @dataProvider getKeys
      */
-    public function testHybridEncryption($publicKey, $privateKey)
+    public function testHybridEncryptionWithExplicitKeys($publicKey, $privateKey)
     {
-        $plaintext  = random_bytes(1024);
+        $plaintext  = random_bytes(4096);
         $ciphertext = $this->crypt->encrypt($plaintext, $publicKey);
 
         $this->assertEquals(
@@ -55,4 +77,5 @@ mtfQDL3hqbP7kg==
             $this->crypt->decrypt($ciphertext, $privateKey)
         );
     }
+
 }
